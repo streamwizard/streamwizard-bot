@@ -7,7 +7,7 @@ const envSchema = z.object({
   TWITCH_CLIENT_ID: z.string(),
   TWITCH_CLIENT_SECRET: z.string(),
   TWITCH_APP_TOKEN: z.string(),
-  
+  TWITCH_CONDUIT_ID: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
