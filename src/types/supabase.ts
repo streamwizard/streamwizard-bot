@@ -164,6 +164,66 @@ export type Database = {
           },
         ]
       }
+      commands: {
+        Row: {
+          channel_id: string
+          created_at: string
+          default_command_id: string
+          enabled: boolean
+          id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          default_command_id: string
+          enabled?: boolean
+          id?: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          default_command_id?: string
+          enabled?: boolean
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "command_settings_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "integrations_twitch"
+            referencedColumns: ["twitch_user_id"]
+          },
+          {
+            foreignKeyName: "command_settings_default_command_id_fkey"
+            columns: ["default_command_id"]
+            isOneToOne: false
+            referencedRelation: "default_chat_commands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      default_chat_commands: {
+        Row: {
+          command: string
+          created_at: string
+          id: string
+          message: string
+        }
+        Insert: {
+          command: string
+          created_at?: string
+          id?: string
+          message: string
+        }
+        Update: {
+          command?: string
+          created_at?: string
+          id?: string
+          message?: string
+        }
+        Relationships: []
+      }
       integrations: {
         Row: {
           created_at: string
