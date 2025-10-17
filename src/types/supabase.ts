@@ -262,6 +262,33 @@ export type Database = {
           },
         ]
       }
+      twitch_app_token: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_in: number
+          id: string
+          token_type: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_in: number
+          id?: string
+          token_type: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_in?: number
+          id?: string
+          token_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       twitch_clip_syncs: {
         Row: {
           clip_count: number

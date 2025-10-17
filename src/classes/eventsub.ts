@@ -1,6 +1,8 @@
 import axios from "axios";
 import type { TwitchEventSubMessage, EventSubscription, EventSubNotification, subscription_type } from "../types/twitch";
 import { env } from "../lib/env.js";
+import { handleChatMessage } from "@/functions/handle-chat-message.js";
+import type { ChannelChatMessageEvent } from "@/types/twitch-eventsub-messages.js";
 
 export class WebSocketService {
   private ws: WebSocket | null = null;
@@ -243,7 +245,10 @@ export class WebSocketService {
           payload,
         } as EventSubNotification;
 
-        console.log(event.payload.event.message);
+
+        if(event.payload.subscription.type === "channel.chat.message") {
+          await handleChatMessage(event.payload.event as ChannelChatMessageEvent);
+        }
         break;
 
       case "session_reconnect":
