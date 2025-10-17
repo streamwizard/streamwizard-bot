@@ -1,4 +1,3 @@
-import type { Env } from "../../utils/env.js";
 import { TwitchApiBaseClient } from "./base-client.js";
 
 export interface Clip {
