@@ -29,8 +29,6 @@ export async function handleChatMessage(message: ChannelChatMessageEvent) {
       .eq("default_chat_commands.command", command)
       .single();
 
-    console.log(data);
-
     if (error) {
       if (error.code === "PGRST116") {
         return;
