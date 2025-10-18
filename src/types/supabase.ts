@@ -205,18 +205,21 @@ export type Database = {
       }
       default_chat_commands: {
         Row: {
+          action: string | null
           command: string
           created_at: string
           id: string
           message: string
         }
         Insert: {
+          action?: string | null
           command: string
           created_at?: string
           id?: string
           message: string
         }
         Update: {
+          action?: string | null
           command?: string
           created_at?: string
           id?: string

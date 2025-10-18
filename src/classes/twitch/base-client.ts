@@ -1,5 +1,5 @@
 import { env } from "@/lib/env";
-import { getChannelAccessToken, getTwitchAppToken } from "@/lib/supabase";
+import { getChannelAccessToken, getChannelRefreshToken, getTwitchAppToken, updateChannelAccessToken } from "@/lib/supabase";
 import type { RefreshTwitchTokenResponse } from "@/types/twitch-api";
 import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
@@ -101,8 +101,14 @@ export abstract class TwitchApiBaseClient {
     );
   }
 
-  private async refreshTokenAndRetry(refreshToken: string): Promise<string | null> {
+  private async refreshTokenAndRetry(broadcaster_id: string): Promise<string | null> {
     try {
+      // get the refresh token from the database
+      const refreshToken = await getChannelRefreshToken(broadcaster_id);
+      if (!refreshToken) {
+        throw new Error("No refresh token found for channel");
+      }
+      // refresh the token
       const response = await axios.post<RefreshTwitchTokenResponse>("https://id.twitch.tv/oauth2/token", null, {
         params: {
           client_id: env.TWITCH_CLIENT_ID,
@@ -111,6 +117,8 @@ export abstract class TwitchApiBaseClient {
           refresh_token: refreshToken,
         },
       });
+      // update the token in the database
+      await updateChannelAccessToken(response.data, broadcaster_id);
       return response.data.access_token;
     } catch (error) {
       console.error("❌ Token refresh failed:", error);

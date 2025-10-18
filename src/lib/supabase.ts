@@ -25,10 +25,28 @@ export async function getChannelAccessToken(channelId: string): Promise<string> 
   return data.access_token;
 }
 
+export async function getChannelRefreshToken(channelId: string): Promise<string> {
+  const { data, error } = await supabase.from("integrations_twitch").select("refresh_token").eq("twitch_user_id", channelId).single();
+  if (error || !data.refresh_token) {
+    if (error) {
+      throw error;
+    }
+    if (!data.refresh_token) {
+      throw new Error("No refresh token found for channel");
+    }
+  }
+
+  return data.refresh_token;
+}
+
 export async function updateChannelAccessToken(newToken: RefreshTwitchTokenResponse, channelId: string): Promise<TwitchIntegration> {
   const { data, error } = await supabase
     .from("integrations_twitch")
-    .update({ access_token: newToken.access_token, refresh_token: newToken.refresh_token, token_expires_at: new Date(Date.now() + newToken.expires_in * 1000).toISOString() })
+    .update({
+      access_token: newToken.access_token,
+      refresh_token: newToken.refresh_token,
+      token_expires_at: new Date(Date.now() + newToken.expires_in * 1000).toISOString(),
+    })
     .eq("twitch_user_id", channelId)
     .single();
 
