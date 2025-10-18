@@ -42,11 +42,7 @@ export async function getChannelRefreshToken(channelId: string): Promise<string>
 export async function updateChannelAccessToken(newToken: RefreshTwitchTokenResponse, channelId: string): Promise<TwitchIntegration> {
   const { data, error } = await supabase
     .from("integrations_twitch")
-    .update({
-      access_token: newToken.access_token,
-      refresh_token: newToken.refresh_token,
-      token_expires_at: new Date(Date.now() + newToken.expires_in * 1000).toISOString(),
-    })
+    .update({ access_token: newToken.access_token, refresh_token: newToken.refresh_token, token_expires_at: new Date(Date.now() + newToken.expires_in * 1000).toISOString() })
     .eq("twitch_user_id", channelId)
     .single();
 

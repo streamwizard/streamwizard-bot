@@ -23,7 +23,7 @@ export async function handleChatMessage(message: ChannelChatMessageEvent) {
     // check is in the database
     const { data, error } = await supabase
       .from("commands")
-      .select("default_chat_commands!inner(message, action)")
+      .select("default_chat_commands!inner(id, message, action)")
       .eq("enabled", true)
       .eq("channel_id", message.broadcaster_user_id)
       .eq("default_chat_commands.command", command)
@@ -36,6 +36,8 @@ export async function handleChatMessage(message: ChannelChatMessageEvent) {
       console.error(error);
       return;
     }
+
+
 
     if (data?.default_chat_commands) {
       returnMessage = data.default_chat_commands.message;
@@ -58,7 +60,12 @@ export async function handleChatMessage(message: ChannelChatMessageEvent) {
     //   const actionResult = await handleAction(actionEvent, twitchApi, message.broadcaster_user_id);
     // }
 
-    const resolvedMessage = await resolveVariables(returnMessage, { twitchApi });
+   const historyResults: Record<string, any> = {
+    [data?.default_chat_commands?.id]: message,
+   };
+    const resolvedMessage = await resolveVariables(returnMessage, { twitchApi }, historyResults);
+
+    console.log("🔑 Resolved message:", resolvedMessage);
 
     // send the message to the broadcaster chat
     if (returnMessage) {

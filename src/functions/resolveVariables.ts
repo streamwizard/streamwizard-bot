@@ -48,7 +48,7 @@ const ResolverRegistry: Record<string, Record<string, VariableResolver<any> | Fl
 };
 
 // ===== MAIN RESOLVER FUNCTION =====
-export async function resolveVariables(message: string, ctx: ServiceContext = {}): Promise<string> {
+export async function resolveVariables(message: string, ctx: ServiceContext = {}, historyResults: Record<string, any> = {}): Promise<string> {
   // Extract all variable references
   const variablesArray = message.match(/\$\{([\w\.-]+)\}/g) || [];
   if (variablesArray.length === 0) return message;
@@ -67,6 +67,26 @@ export async function resolveVariables(message: string, ctx: ServiceContext = {}
 
     const [namespace, key] = hasNamespace ? (raw.split(".", 2) as [string, string]) : ["twitch", raw]; // Default to twitch for backwards compatibility
 
+    if (isUuid(namespace)) {
+      if (!historyResults?.[namespace]) {
+        console.warn(`No history results found for UUID: ${namespace}`);
+        resolvedMessage = resolvedMessage.replace(variable, "");
+        continue;
+      }
+
+      const value = historyResults[namespace][key];
+
+      // check if the value is a string
+      if (typeof value !== "string") {
+        console.warn(`History result is not a string: ${namespace}`);
+        resolvedMessage = resolvedMessage.replace(variable, "");
+        continue;
+      }
+
+      resolvedMessage = resolvedMessage.replace(variable, value);
+      continue;
+    }
+
     const namespaceResolvers = ResolverRegistry[namespace];
     if (!namespaceResolvers) {
       console.warn(`Unknown namespace: ${namespace}`);
@@ -83,7 +103,6 @@ export async function resolveVariables(message: string, ctx: ServiceContext = {}
 
     try {
       const value = await resolver(ctx);
-      console.log("🔑 Value:", value);
       // Convert non-string values to string for template replacement
       const stringValue =
         typeof value === "string"
