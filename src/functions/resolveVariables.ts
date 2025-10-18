@@ -41,7 +41,6 @@ const ServiceRequirements: Record<string, ServiceDependencies> = {
 };
 
 // ===== RESOLVER REGISTRY =====
-
 const ResolverRegistry: Record<string, Record<string, VariableResolver<any> | FlexibleResolver<any>>> = {
   global: GlobalVariableResolvers,
   twitch: TwitchVariableResolvers,
