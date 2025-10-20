@@ -49,3 +49,7 @@ SELECT
 FROM public.commands c;
 -- This shows all commands and marks which ones are yours
 
+
+
+
+
