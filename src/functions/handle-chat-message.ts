@@ -20,29 +20,50 @@ export async function handleChatMessage(message: ChannelChatMessageEvent) {
   let returnMessage: string = "";
   let action: string | null = null;
   if (command.startsWith("!")) {
-    // check is in the database
+    // Get all enabled commands for this channel, fetching both custom and default command details
     const { data, error } = await supabase
       .from("commands")
-      .select("default_chat_commands!inner(id, message, action)")
+      .select(`
+        custom_commands(id, message, action, command),
+        default_chat_commands(id, message, action, command)
+      `)
       .eq("enabled", true)
-      .eq("channel_id", message.broadcaster_user_id)
-      .eq("default_chat_commands.command", command)
-      .single();
+      .eq("channel_id", message.broadcaster_user_id);
 
     if (error) {
-      if (error.code === "PGRST116") {
-        return;
-      }
       console.error(error);
       return;
     }
 
-
-
-    if (data?.default_chat_commands) {
-      returnMessage = data.default_chat_commands.message;
-      action = data.default_chat_commands.action || "";
+    if (!data || data.length === 0) {
+      console.log("No commands found for this channel");
+      return;
     }
+
+    // Find the command that matches (check both custom and default)
+    const matchingCommand = data.find((cmd) => {
+      return (cmd.custom_commands && cmd.custom_commands.command === command) ||
+             (cmd.default_chat_commands && cmd.default_chat_commands.command === command);
+    });
+
+    if (!matchingCommand) {
+      return;
+    }
+
+    // Use the matching command data (check which one actually matches)
+    let commandData = null;
+    if (matchingCommand.custom_commands && matchingCommand.custom_commands.command === command) {
+      commandData = matchingCommand.custom_commands;
+    } else if (matchingCommand.default_chat_commands && matchingCommand.default_chat_commands.command === command) {
+      commandData = matchingCommand.default_chat_commands;
+    }
+
+    if (!commandData) {
+      return;
+    }
+
+    returnMessage = commandData.message || "";
+    action = commandData.action || "";
 
     // if(action) {
     //   const Results: Record<string, any> = {
@@ -61,7 +82,7 @@ export async function handleChatMessage(message: ChannelChatMessageEvent) {
     // }
 
    const historyResults: Record<string, any> = {
-    [data?.default_chat_commands?.id]: message,
+    [commandData.id]: message,
    };
     const resolvedMessage = await resolveVariables(returnMessage, { twitchApi }, historyResults);
 

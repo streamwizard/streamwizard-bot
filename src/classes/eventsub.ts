@@ -15,7 +15,7 @@ export class WebSocketService {
   private readonly MAX_MISSED_KEEPALIVES = 10;
 
   // Connection state management
-  private connectionState: 'disconnected' | 'connecting' | 'connected' | 'reconnecting' = 'disconnected';
+  private connectionState: "disconnected" | "connecting" | "connected" | "reconnecting" = "disconnected";
   private reconnectAttempts: number = 0;
   private readonly MAX_RECONNECT_ATTEMPTS = 10;
   private readonly BASE_RECONNECT_DELAY = 1000; // Start at 1 second
@@ -24,52 +24,49 @@ export class WebSocketService {
   private conduitId: string | null = null;
 
   constructor(private wsUrl: string = "wss://eventsub.wss.twitch.tv/ws") {
-    this.conduitId = env.TWITCH_CONDUIT_ID || "2781ae49-eba5-4f19-a4f0-c69d0d9a75e1";
+    this.conduitId = "ddd2762d-c642-4ecf-905d-b60bf67f0e80";
   }
 
   async connect(): Promise<void> {
-    if (this.connectionState === 'connecting' || this.connectionState === 'connected') {
-      console.log('⏳ Already connected or connecting');
+    if (this.connectionState === "connecting" || this.connectionState === "connected") {
+      console.log("⏳ Already connected or connecting");
       return;
     }
 
     try {
-      this.connectionState = 'connecting';
+      this.connectionState = "connecting";
       console.log("🔌 Connecting to Twitch EventSub WebSocket...");
-      
+
       this.cleanup(); // Ensure clean state
       this.ws = new WebSocket(this.wsUrl);
       this.setupEventHandlers();
     } catch (error) {
-      console.error('❌ Connection failed:', error);
-      this.connectionState = 'disconnected';
+      console.error("❌ Connection failed:", error);
+      this.connectionState = "disconnected";
       throw error;
     }
   }
 
   // Improved reconnect with exponential backoff
   private getReconnectDelay(): number {
-    const delay = Math.min(
-      this.BASE_RECONNECT_DELAY * Math.pow(2, this.reconnectAttempts),
-      this.MAX_RECONNECT_DELAY
-    );
+    const delay = Math.min(this.BASE_RECONNECT_DELAY * Math.pow(2, this.reconnectAttempts), this.MAX_RECONNECT_DELAY);
     // Add jitter to prevent thundering herd
     return delay + Math.random() * 1000;
   }
 
   private async reconnect(): Promise<void> {
-    if (this.connectionState === 'connecting' || this.connectionState === 'reconnecting') {
-      console.log('⏳ Already attempting to connect, skipping duplicate reconnect');
+    if (this.connectionState === "connecting" || this.connectionState === "reconnecting") {
+      console.log("⏳ Already attempting to connect, skipping duplicate reconnect");
       return;
     }
 
     if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
-      console.error('❌ Max reconnection attempts reached. Giving up.');
-      this.connectionState = 'disconnected';
+      console.error("❌ Max reconnection attempts reached. Giving up.");
+      this.connectionState = "disconnected";
       return;
     }
 
-    this.connectionState = 'reconnecting';
+    this.connectionState = "reconnecting";
     this.reconnectAttempts++;
 
     if (this.reconnectUrl) {
@@ -78,7 +75,7 @@ export class WebSocketService {
         this.cleanup(); // Clean up old connection
         this.ws = new WebSocket(this.reconnectUrl);
         this.setupEventHandlers();
-        this.connectionState = 'connected';
+        this.connectionState = "connected";
         this.reconnectAttempts = 0; // Reset on success
       } catch (error) {
         console.error("❌ Reconnection failed:", error);
@@ -110,9 +107,8 @@ export class WebSocketService {
       this.ws.onmessage = null;
       this.ws.onerror = null;
       this.ws.onclose = null;
-      
-      if (this.ws.readyState === WebSocket.OPEN || 
-          this.ws.readyState === WebSocket.CONNECTING) {
+
+      if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
         this.ws.close();
       }
       this.ws = null;
@@ -123,8 +119,8 @@ export class WebSocketService {
     if (!this.ws) return;
 
     this.ws.onopen = () => {
-      console.log('✅ WebSocket connected');
-      this.connectionState = 'connected';
+      console.log("✅ WebSocket connected");
+      this.connectionState = "connected";
       this.reconnectAttempts = 0; // Reset on successful connection
     };
 
@@ -222,9 +218,9 @@ export class WebSocketService {
               }
             );
             // Log the event
-            } catch (error) {
-              console.error("❌ Failed to update conduit shards:", error);
-            }
+          } catch (error) {
+            console.error("❌ Failed to update conduit shards:", error);
+          }
         }
 
         break;
@@ -245,8 +241,7 @@ export class WebSocketService {
           payload,
         } as EventSubNotification;
 
-
-        if(event.payload.subscription.type === "channel.chat.message") {
+        if (event.payload.subscription.type === "channel.chat.message") {
           await handleChatMessage(event.payload.event as ChannelChatMessageEvent);
         }
         break;
@@ -330,30 +325,30 @@ export class WebSocketService {
     const closeCode = event.code;
     const closeReason = this.getCloseReason(closeCode);
     console.log(`🔌 WebSocket closed: ${closeCode} - ${closeReason}`);
-    
-    this.connectionState = 'disconnected';
+
+    this.connectionState = "disconnected";
     this.cleanup();
 
     // Handle specific close codes
     switch (closeCode) {
       case 4001: // Client sent inbound traffic - don't reconnect
-        console.error('❌ Client error - not reconnecting');
+        console.error("❌ Client error - not reconnecting");
         return;
 
       case 4003: // Connection unused
-        console.warn('⚠️ Connection unused - reconnecting with fresh connection');
+        console.warn("⚠️ Connection unused - reconnecting with fresh connection");
         this.reconnectUrl = null; // Force fresh connection
         this.scheduleReconnect();
         break;
 
       case 4007: // Invalid reconnect URL
-        console.warn('⚠️ Invalid reconnect URL - will use fresh connection');
+        console.warn("⚠️ Invalid reconnect URL - will use fresh connection");
         this.reconnectUrl = null; // Clear invalid URL
         this.scheduleReconnect();
         break;
 
       case 1000: // Normal closure
-        console.log('✅ Normal closure');
+        console.log("✅ Normal closure");
         if (this.reconnectUrl) {
           this.scheduleReconnect();
         }
@@ -362,10 +357,10 @@ export class WebSocketService {
       default:
         // For all other errors, use reconnect URL if available
         if (this.reconnectUrl) {
-          console.log('🔄 Using reconnect URL for recovery');
+          console.log("🔄 Using reconnect URL for recovery");
           this.scheduleReconnect();
         } else {
-          console.log('🔄 No reconnect URL, will create fresh connection');
+          console.log("🔄 No reconnect URL, will create fresh connection");
           this.scheduleReconnect();
         }
     }
@@ -373,8 +368,8 @@ export class WebSocketService {
 
   // Add graceful shutdown method
   async disconnect(): Promise<void> {
-    console.log('🛑 Disconnecting from Twitch EventSub...');
-    this.connectionState = 'disconnected';
+    console.log("🛑 Disconnecting from Twitch EventSub...");
+    this.connectionState = "disconnected";
     this.reconnectAttempts = this.MAX_RECONNECT_ATTEMPTS; // Prevent reconnection
     this.cleanup();
   }

@@ -168,34 +168,44 @@ export type Database = {
         Row: {
           channel_id: string
           created_at: string
-          default_command_id: string
+          custom_command_id: string | null
+          default_command_id: string | null
           enabled: boolean
           id: string
         }
         Insert: {
           channel_id: string
           created_at?: string
-          default_command_id: string
+          custom_command_id?: string | null
+          default_command_id?: string | null
           enabled?: boolean
           id?: string
         }
         Update: {
           channel_id?: string
           created_at?: string
-          default_command_id?: string
+          custom_command_id?: string | null
+          default_command_id?: string | null
           enabled?: boolean
           id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "command_settings_channel_id_fkey"
+            foreignKeyName: "commands_channel_id_fkey"
             columns: ["channel_id"]
             isOneToOne: false
             referencedRelation: "integrations_twitch"
             referencedColumns: ["twitch_user_id"]
           },
           {
-            foreignKeyName: "command_settings_default_command_id_fkey"
+            foreignKeyName: "commands_custom_command_id_fkey"
+            columns: ["custom_command_id"]
+            isOneToOne: false
+            referencedRelation: "custom_commands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commands_default_command_id_fkey"
             columns: ["default_command_id"]
             isOneToOne: false
             referencedRelation: "default_chat_commands"
@@ -203,10 +213,38 @@ export type Database = {
           },
         ]
       }
+      custom_commands: {
+        Row: {
+          action: string | null
+          command: string
+          context: Json | null
+          created_at: string
+          id: string
+          message: string | null
+        }
+        Insert: {
+          action?: string | null
+          command: string
+          context?: Json | null
+          created_at?: string
+          id?: string
+          message?: string | null
+        }
+        Update: {
+          action?: string | null
+          command?: string
+          context?: Json | null
+          created_at?: string
+          id?: string
+          message?: string | null
+        }
+        Relationships: []
+      }
       default_chat_commands: {
         Row: {
           action: string | null
           command: string
+          context: Json | null
           created_at: string
           id: string
           message: string
@@ -214,6 +252,7 @@ export type Database = {
         Insert: {
           action?: string | null
           command: string
+          context?: Json | null
           created_at?: string
           id?: string
           message: string
@@ -221,6 +260,7 @@ export type Database = {
         Update: {
           action?: string | null
           command?: string
+          context?: Json | null
           created_at?: string
           id?: string
           message?: string
@@ -449,7 +489,7 @@ export type Database = {
         Returns: undefined
       }
       get_all_clips_with_folders: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           broadcaster_id: string
           broadcaster_name: string
@@ -502,6 +542,7 @@ export type Database = {
           vod_offset: number
         }[]
       }
+      get_user_twitch_ids: { Args: never; Returns: string[] }
       insert_discord_integration: {
         Args: { integration_id: string; provider_data: Json; user_id: string }
         Returns: undefined
@@ -521,6 +562,21 @@ export type Database = {
         Args: { p_clip_id: string; p_folder_id: string }
         Returns: undefined
       }
+      sync_all_default_commands: {
+        Args: never
+        Returns: {
+          total_channels: number
+          total_commands_added: number
+        }[]
+      }
+      sync_default_commands_for_channels: {
+        Args: { target_channel_id?: string }
+        Returns: {
+          commands_added: number
+          returned_channel_id: string
+        }[]
+      }
+      user_owns_channel: { Args: { channel_id: string }; Returns: boolean }
     }
     Enums: {
       actions:
